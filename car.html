@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Car Race Game</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        background: #222;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+        text-align: center;
+        color: white;
+    }
+
+    h1 {
+        margin: 10px 0 5px;
+    }
+
+    #game {
+        position: relative;
+        width: 400px;
+        height: 600px;
+        margin: auto;
+        background: #555;
+        overflow: hidden;
+        border: 4px solid white;
+    }
+
+    /* Road */
+    .road {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: #444;
+    }
+
+    /* Road lane lines */
+    .line {
+        position: absolute;
+        width: 8px;
+        height: 80px;
+        background: white;
+        left: 196px;
+    }
+
+    /* Player car */
+    #player {
+        position: absolute;
+        width: 50px;
+        height: 90px;
+        background: red;
+        bottom: 30px;
+        left: 175px;
+        border-radius: 10px;
+        z-index: 5;
+    }
+
+    #player::before,
+    #player::after {
+        content: "";
+        position: absolute;
+        width: 10px;
+        height: 25px;
+        background: #111;
+        top: 15px;
+        border-radius: 3px;
+    }
+
+    #player::before {
+        left: -6px;
+    }
+
+    #player::after {
+        right: -6px;
+    }
+
+    /* Enemy cars */
+    .enemy {
+        position: absolute;
+        width: 50px;
+        height: 90px;
+        background: blue;
+        border-radius: 10px;
+        z-index: 4;
+    }
+
+    #score {
+        font-size: 20px;
+        margin: 5px;
+    }
+
+    #gameOver {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.75);
+        z-index: 10;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    #gameOver h2 {
+        font-size: 40px;
+        margin: 10px;
+    }
+
+    button {
+        padding: 12px 25px;
+        font-size: 18px;
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+    }
+
+    .controls {
+        margin-top: 10px;
+        font-size: 14px;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>🏎️ Car Race</h1>
+<div id="score">Score: 0</div>
+
+<div id="game">
+
+    <div class="road"></div>
+
+    <div class="line" style="top: -80px;"></div>
+    <div class="line" style="top: 100px;"></div>
+    <div class="line" style="top: 280px;"></div>
+    <div class="line" style="top: 460px;"></div>
+
+    <div id="player"></div>
+
+    <div id="gameOver">
+        <h2>GAME OVER</h2>
+        <p id="finalScore"></p>
+        <button onclick="restartGame()">Play Again</button>
+    </div>
+
+</div>
+
+<div class="controls">
+    Use ⬅️ ➡️ or A / D to move
+</div>
+
+<script>
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const scoreText = document.getElementById("score");
+const gameOverScreen = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
+
+let playerX = 175;
+let score = 0;
+let speed = 5;
+let gameRunning = true;
+
+let keys = {
+    left: false,
+    right: false
+};
+
+let enemies = [];
+
+/* Keyboard controls */
+document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+        keys.left = true;
+    }
+
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+        keys.right = true;
+    }
+});
+
+document.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
+        keys.left = false;
+    }
+
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
+        keys.right = false;
+    }
+});
+
+/* Create enemy */
+function createEnemy() {
+    const enemy = document.createElement("div");
+    enemy.classList.add("enemy");
+
+    const x = Math.floor(Math.random() * 350);
+    enemy.style.left = x + "px";
+    enemy.style.top = "-100px";
+
+    game.appendChild(enemy);
+    enemies.push(enemy);
+}
+
+/* Collision detection */
+function collision(a, b) {
+    const r1 = a.getBoundingClientRect();
+    const r2 = b.getBoundingClientRect();
+
+    return !(
+        r1.bottom < r2.top ||
+        r1.top > r2.bottom ||
+        r1.right < r2.left ||
+        r1.left > r2.right
+    );
+}
+
+/* Main game loop */
+function gameLoop() {
+    if (!gameRunning) return;
+
+    /* Move player */
+    if (keys.left) {
+        playerX -= 7;
+    }
+
+    if (keys.right) {
+        playerX += 7;
+    }
+
+    /* Keep player on road */
+    if (playerX < 5) playerX = 5;
+    if (playerX > 345) playerX = 345;
+
+    player.style.left = playerX + "px";
+
+    /* Move enemy cars */
+    enemies.forEach((enemy, index) => {
+        let y = parseInt(enemy.style.top);
+        y += speed;
+        enemy.style.top = y + "px";
+
+        /* Collision */
+        if (collision(player, enemy)) {
+            endGame();
+        }
+
+        /* Enemy passed player */
+        if (y > 650) {
+            enemy.remove();
+            enemies.splice(index, 1);
+
+            score++;
+            scoreText.textContent = "Score: " + score;
+
+            /* Gradually increase speed */
+            if (score % 5 === 0) {
+                speed += 0.5;
+            }
+        }
+    });
+
+    requestAnimationFrame(gameLoop);
+}
+
+/* Spawn enemies */
+setInterval(() => {
+    if (gameRunning) {
+        createEnemy();
+    }
+}, 1200);
+
+/* Move road lines */
+function moveLines() {
+    const lines = document.querySelectorAll(".line");
+
+    lines.forEach(line => {
+        let y = parseInt(line.style.top);
+        y += speed;
+
+        if (y > 600) {
+            y = -80;
+        }
+
+        line.style.top = y + "px";
+    });
+
+    if (gameRunning) {
+        requestAnimationFrame(moveLines);
+    }
+}
+
+/* End game */
+function endGame() {
+    gameRunning = false;
+
+    finalScore.textContent = "Your score: " + score;
+    gameOverScreen.style.display = "flex";
+}
+
+/* Restart */
+function restartGame() {
+    enemies.forEach(enemy => enemy.remove());
+    enemies = [];
+
+    playerX = 175;
+    score = 0;
+    speed = 5;
+
+    player.style.left = playerX + "px";
+    scoreText.textContent = "Score: 0";
+
+    gameOverScreen.style.display = "none";
+
+    gameRunning = true;
+
+    gameLoop();
+    moveLines();
+}
+
+/* Start game */
+gameLoop();
+moveLines();
+</script>
+
+</body>
+</html>
