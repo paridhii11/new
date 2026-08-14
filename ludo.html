@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ludo Game</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #171717, #292929);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.game-container {
+    width: min(95vw, 900px);
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 15px;
+    font-size: 34px;
+    color: #fff;
+}
+
+.game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* BOARD */
+
+.board {
+    width: min(90vw, 650px);
+    aspect-ratio: 1;
+    background: #fff;
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    grid-template-rows: repeat(15, 1fr);
+    border: 5px solid #111;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5);
+}
+
+/* HOME AREAS */
+
+.home {
+    position: absolute;
+    width: 40%;
+    height: 40%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 12%;
+    padding: 8%;
+    border: 3px solid #111;
+}
+
+.home.red {
+    top: 0;
+    left: 0;
+    background: #e53935;
+}
+
+.home.green {
+    top: 0;
+    right: 0;
+    background: #43a047;
+}
+
+.home.yellow {
+    bottom: 0;
+    right: 0;
+    background: #fdd835;
+}
+
+.home.blue {
+    bottom: 0;
+    left: 0;
+    background: #1e88e5;
+}
+
+.home-slot {
+    background: white;
+    border-radius: 50%;
+    border: 3px solid rgba(0,0,0,.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* PATH */
+
+.path-cell {
+    border: 1px solid #aaa;
+    background: #fafafa;
+    position: relative;
+}
+
+.path-cell.red {
+    background: #ef9a9a;
+}
+
+.path-cell.green {
+    background: #a5d6a7;
+}
+
+.path-cell.yellow {
+    background: #fff59d;
+}
+
+.path-cell.blue {
+    background: #90caf9;
+}
+
+/* CENTER */
+
+.center {
+    position: absolute;
+    width: 20%;
+    height: 20%;
+    left: 40%;
+    top: 40%;
+    background: conic-gradient(
+        #43a047 0deg 90deg,
+        #fdd835 90deg 180deg,
+        #1e88e5 180deg 270deg,
+        #e53935 270deg 360deg
+    );
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    border: 2px solid #111;
+}
+
+/* TOKENS */
+
+.token {
+    position: absolute;
+    width: 5.2%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 2px solid #111;
+    z-index: 20;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 3px 6px rgba(0,0,0,.5);
+}
+
+.token:hover {
+    transform: scale(1.15);
+}
+
+.token.movable {
+    animation: pulse .8s infinite alternate;
+    box-shadow: 0 0 12px 4px white;
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.15); }
+}
+
+.token.red {
+    background: #d32f2f;
+}
+
+.token.green {
+    background: #2e7d32;
+}
+
+.token.yellow {
+    background: #f9a825;
+}
+
+.token.blue {
+    background: #1565c0;
+}
+
+/* CONTROLS */
+
+.controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.dice {
+    width: 80px;
+    height: 80px;
+    background: white;
+    color: #111;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 45px;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0,0,0,.4);
+}
+
+button {
+    padding: 14px 25px;
+    border: none;
+    border-radius: 10px;
+    background: #ff5722;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: .2s;
+}
+
+button:hover {
+    background: #e64a19;
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    background: #777;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.info {
+    margin-top: 15px;
+    font-size: 20px;
+}
+
+.current-player {
+    font-weight: bold;
+}
+
+.message {
+    margin-top: 10px;
+    min-height: 25px;
+    color: #ffd54f;
+}
+
+/* MOBILE */
+
+@media(max-width:600px) {
+    h1 {
+        font-size: 26px;
+    }
+
+    .dice {
+        width: 65px;
+        height: 65px;
+        font-size: 35px;
+    }
+
+    button {
+        font-size: 16px;
+        padding: 12px 18px;
+    }
+
+    .info {
+        font-size: 16px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="game-container">
+
+    <h1>🎲 LUDO</h1>
+
+    <div class="game-area">
+
+        <div class="board" id="board">
+
+            <!-- HOME AREAS -->
+
+            <div class="home red">
+                <div class="home-slot" data-home="red" data-index="0"></div>
+                <div class="home-slot" data-home="red" data-index="1"></div>
+                <div class="home-slot" data-home="red" data-index="2"></div>
+                <div class="home-slot" data-home="red" data-index="3"></div>
+            </div>
+
+            <div class="home green">
+                <div class="home-slot" data-home="green" data-index="0"></div>
+                <div class="home-slot" data-home="green" data-index="1"></div>
+                <div class="home-slot" data-home="green" data-index="2"></div>
+                <div class="home-slot" data-home="green" data-index="3"></div>
+            </div>
+
+            <div class="home yellow">
+                <div class="home-slot" data-home="yellow" data-index="0"></div>
+                <div class="home-slot" data-home="yellow" data-index="1"></div>
+                <div class="home-slot" data-home="yellow" data-index="2"></div>
+                <div class="home-slot" data-home="yellow" data-index="3"></div>
+            </div>
+
+            <div class="home blue">
+                <div class="home-slot" data-home="blue" data-index="0"></div>
+                <div class="home-slot" data-home="blue" data-index="1"></div>
+                <div class="home-slot" data-home="blue" data-index="2"></div>
+                <div class="home-slot" data-home="blue" data-index="3"></div>
+            </div>
+
+            <div class="center"></div>
+
+        </div>
+
+        <div class="info">
+            Turn: <span id="playerName" class="current-player">Red</span>
+        </div>
+
+        <div class="controls">
+
+            <div class="dice" id="dice">⚀</div>
+
+            <button id="rollButton">
+                Roll Dice
+            </button>
+
+        </div>
+
+        <div class="message" id="message">
+            Roll the dice to start!
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+/* =========================================
+   LUDO GAME
+========================================= */
+
+const board = document.getElementById("board");
+const diceElement = document.getElementById("dice");
+const rollButton = document.getElementById("rollButton");
+const playerNameElement = document.getElementById("playerName");
+const messageElement = document.getElementById("message");
+
+/*
+    Main Ludo track.
+
+    Coordinates are represented as:
+    [row, column]
+
+    The board is 15 x 15.
+*/
+
+const path = [
+
+    // Top horizontal
+    [6,1],[6,2],[6,3],[6,4],[6,5],
+    [5,6],[4,6],[3,6],[2,6],[1,6],
+
+    // Right top
+    [1,7],[1,8],
+
+    [2,8],[3,8],[4,8],[5,8],
+
+    [6,9],[6,10],[6,11],[6,12],[6,13],
+
+    [7,13],[8,13],
+
+    [8,12],[8,11],[8,10],[8,9],
+
+    [9,8],[10,8],[11,8],[12,8],[13,8],
+
+    [13,7],[13,6],
+
+    [12,6],[11,6],[10,6],[9,6],
+
+    [8,5],[8,4],[8,3],[8,2],[8,1],
+
+    [7,1]
+];
+
+
+/*
+    Player configuration.
+*/
+
+const players = [
+
+    {
+        name: "Red",
+        color: "red",
+        start: 0,
+        homePosition: [
+            [2,2],
+            [2,4],
+            [4,2],
+            [4,4]
+        ]
+    },
+
+    {
+        name: "Green",
+        color: "green",
+        start: 13,
+        homePosition: [
+            [2,10],
+            [2,12],
+            [4,10],
+            [4,12]
+        ]
+    },
+
+    {
+        name: "Yellow",
+        color: "yellow",
+        start: 26,
+        homePosition: [
+            [10,10],
+            [10,12],
+            [12,10],
+            [12,12]
+        ]
+    },
+
+    {
+        name: "Blue",
+        color: "blue",
+        start: 39,
+        homePosition: [
+            [10,2],
+            [10,4],
+            [12,2],
+            [12,4]
+        ]
+    }
+
+];
+
+
+/*
+    Each player has 4 tokens.
+
+    position:
+
+    -1 = inside home
+     0+ = track position
+    56 = finished
+*/
+
+players.forEach(player => {
+
+    player.tokens = [];
+
+    for(let i = 0; i < 4; i++) {
+
+        player.tokens.push({
+            position: -1,
+            homeIndex: i
+        });
+
+    }
+
+});
+
+
+let currentPlayer = 0;
+let diceValue = 0;
+let diceRolled = false;
+let gameOver = false;
+
+
+/* =========================================
+   CREATE BOARD TRACK
+========================================= */
+
+function createBoard() {
+
+    path.forEach((coordinate, index) => {
+
+        const cell = document.createElement("div");
+
+        cell.className = "path-cell";
+
+        cell.style.gridRow = coordinate[0] + 1;
+        cell.style.gridColumn = coordinate[1] + 1;
+
+        cell.dataset.index = index;
+
+        /*
+            Color starting cells.
+        */
+
+        if(index === 0) cell.classList.add("red");
+        if(index === 13) cell.classList.add("green");
+        if(index === 26) cell.classList.add("yellow");
+        if(index === 39) cell.classList.add("blue");
+
+        board.appendChild(cell);
+
+    });
+
+}
+
+
+/* =========================================
+   GET TRACK POSITION
+========================================= */
+
+function getGlobalPosition(playerIndex, tokenPosition) {
+
+    const player = players[playerIndex];
+
+    return (player.start + tokenPosition) % path.length;
+
+}
+
+
+/* =========================================
+   DRAW TOKENS
+========================================= */
+
+function drawTokens() {
+
+    /*
+        Remove existing tokens.
+    */
+
+    document.querySelectorAll(".token").forEach(token => {
+        token.remove();
+    });
+
+
+    players.forEach((player, playerIndex) => {
+
+        player.tokens.forEach((token, tokenIndex) => {
+
+            const element = document.createElement("div");
+
+            element.className =
+                `token ${player.color}`;
+
+            element.dataset.player = playerIndex;
+            element.dataset.token = tokenIndex;
+
+
+            /*
+                Token is still in home.
+            */
+
+            if(token.position === -1) {
+
+                const pos = player.homePosition[tokenIndex];
+
+                element.style.left =
+                    (pos[1] / 15 * 100 + 1) + "%";
+
+                element.style.top =
+                    (pos[0] / 15 * 100 + 1) + "%";
+
+            }
+
+            /*
+                Token reached final home.
+            */
+
+            else if(token.position >= 56) {
+
+                const pos = player.homePosition[tokenIndex];
+
+                element.style.left =
+                    (pos[1] / 15 * 100 + 2) + "%";
+
+                element.style.top =
+                    (pos[0] / 15 * 100 + 2) + "%";
+
+                element.style.opacity = "0.4";
+
+            }
+
+            /*
+                Token is on the track.
+            */
+
+            else {
+
+                const globalPosition =
+                    getGlobalPosition(playerIndex, token.position);
+
+                const pos = path[globalPosition];
+
+                element.style.left =
+                    ((pos[1] + 0.2) / 15 * 100) + "%";
+
+                element.style.top =
+                    ((pos[0] + 0.2) / 15 * 100) + "%";
+
+            }
+
+
+            /*
+                Highlight movable tokens.
+            */
+
+            if(
+                diceRolled &&
+                playerIndex === currentPlayer &&
+                canMove(token)
+            ) {
+
+                element.classList.add("movable");
+
+            }
+
+
+            element.addEventListener("click", () => {
+
+                if(
+                    playerIndex === currentPlayer &&
+                    diceRolled &&
+                    canMove(token)
+                ) {
+
+                    moveToken(playerIndex, tokenIndex);
+
+                }
+
+            });
+
+
+            board.appendChild(element);
+
+        });
+
+    });
+
+}
+
+
+/* =========================================
+   CAN TOKEN MOVE?
+========================================= */
+
+function canMove(token) {
+
+    /*
+        Token in home needs a 6.
+    */
+
+    if(token.position === -1) {
+
+        return diceValue === 6;
+
+    }
+
+
+    /*
+        Cannot go beyond finish.
+    */
+
+    return token.position + diceValue <= 56;
+
+}
+
+
+/* =========================================
+   MOVE TOKEN
+========================================= */
+
+function moveToken(playerIndex, tokenIndex) {
+
+    const player = players[playerIndex];
+    const token = player.tokens[tokenIndex];
+
+    /*
+        Bring token out of home.
+    */
+
+    if(token.position === -1) {
+
+        token.position = 0;
+
+    }
+
+    else {
+
+        token.position += diceValue;
+
+    }
+
+
+    /*
+        Capture opponents.
+    */
+
+    if(token.position < 56) {
+
+        captureOpponents(playerIndex, token);
+
+    }
+
+
+    /*
+        Check winner.
+    */
+
+    if(player.tokens.every(t => t.position === 56)) {
+
+        gameOver = true;
+
+        messageElement.textContent =
+            "🏆 " + player.name + " wins the game!";
+
+        rollButton.disabled = true;
+
+        drawTokens();
+
+        return;
+
+    }
+
+
+    /*
+        Save dice result.
+    */
+
+    const rolledSix = diceValue === 6;
+
+    diceRolled = false;
+    diceValue = 0;
+
+
+    /*
+        Six gives another turn.
+    */
+
+    if(rolledSix) {
+
+        messageElement.textContent =
+            player.name + " rolled a 6! Roll again.";
+
+    }
+
+    else {
+
+        nextPlayer();
+
+    }
+
+
+    drawTokens();
+
+}
+
+
+/* =========================================
+   CAPTURE OPPONENTS
+========================================= */
+
+function captureOpponents(playerIndex, movedToken) {
+
+    const player = players[playerIndex];
+
+    const globalPosition =
+        getGlobalPosition(
+            playerIndex,
+            movedToken.position
+        );
+
+
+    /*
+        Safe starting cells.
+    */
+
+    const safeCells = [
+        0, 8, 13, 21, 26, 34, 39, 47
+    ];
+
+    if(safeCells.includes(globalPosition)) {
+        return;
+    }
+
+
+    players.forEach((otherPlayer, otherIndex) => {
+
+        if(otherIndex === playerIndex) return;
+
+        otherPlayer.tokens.forEach(token => {
+
+            if(token.position < 0 || token.position >= 56)
+                return;
+
+
+            const otherGlobal =
+                getGlobalPosition(
+                    otherIndex,
+                    token.position
+                );
+
+
+            if(otherGlobal === globalPosition) {
+
+                token.position = -1;
+
+                messageElement.textContent =
+                    player.name +
+                    " captured " +
+                    otherPlayer.name +
+                    "'s token!";
+
+            }
+
+        });
+
+    });
+
+}
+
+
+/* =========================================
+   NEXT PLAYER
+========================================= */
+
+function nextPlayer() {
+
+    currentPlayer =
+        (currentPlayer + 1) % players.length;
+
+    playerNameElement.textContent =
+        players[currentPlayer].name;
+
+    messageElement.textContent =
+        players[currentPlayer].name +
+        "'s turn. Roll the dice.";
+
+}
+
+
+/* =========================================
+   ROLL DICE
+========================================= */
+
+rollButton.addEventListener("click", () => {
+
+    if(gameOver || diceRolled) return;
+
+
+    diceValue =
+        Math.floor(Math.random() * 6) + 1;
+
+
+    diceElement.textContent =
+        ["⚀","⚁","⚂","⚃","⚄","⚅"][diceValue - 1];
+
+
+    diceRolled = true;
+
+
+    const player =
+        players[currentPlayer];
+
+
+    /*
+        Check if at least one token can move.
+    */
+
+    const movable =
+        player.tokens.some(token =>
+            canMove(token)
+        );
+
+
+    if(!movable) {
+
+        messageElement.textContent =
+            player.name +
+            " cannot move.";
+
+        diceRolled = false;
+
+
+        /*
+            Six still gives another roll.
+        */
+
+        if(diceValue !== 6) {
+
+            setTimeout(() => {
+
+                nextPlayer();
+                drawTokens();
+
+            }, 800);
+
+        }
+        else {
+
+            messageElement.textContent =
+                player.name +
+                " rolled a 6. Roll again.";
+
+        }
+
+        return;
+
+    }
+
+
+    messageElement.textContent =
+        player.name +
+        " rolled " +
+        diceValue +
+        ". Select a token.";
+
+    drawTokens();
+
+});
+
+
+/* =========================================
+   INITIALIZE
+========================================= */
+
+createBoard();
+drawTokens();
+
+</script>
+
+</body>
+</html>
